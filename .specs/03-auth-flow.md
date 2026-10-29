@@ -23,7 +23,10 @@ HttpOnly cookies mean the browser JavaScript cannot read the session, so the bro
 | --- | --- | --- |
 | `lib/supabase/server.ts` | Server Components, Server Actions, Route Handlers | `createServerClient` with `cookies()` from `next/headers`; `setAll` forces `httpOnly`, `secure`, `sameSite` |
 | `lib/supabase/proxy.ts` | `proxy.ts` | Reads cookies from `NextRequest`, writes refreshed cookies to `NextResponse` with the same forced options |
-| `lib/supabase/browser.ts` | Client Components (uploads only) | `createBrowserClient` with anon key, **no session**; only `uploadToSignedUrl` is allowed |
+| `lib/supabase/config.ts` | both clients above | Env var validation + `withSecureCookieOptions()` (single place that forces the cookie flags) |
+| `lib/supabase/browser.ts` | Client Components (uploads only) | `createBrowserClient` with anon key, **no session**; only `uploadToSignedUrl` is allowed. Added with the products feature (04). |
+
+Route-group layout: `app/dashboard/layout.tsx` requires a signed-in user; merchant-only pages live in `app/dashboard/(merchant)/` and call `requireMerchant()`; `app/dashboard/onboarding` only requires a user. With `cacheComponents` enabled, every session read sits behind a `<Suspense>` boundary.
 
 Setting cookies from a Server Component throws; `setAll` wraps it in `try/catch` (the proxy already refreshed them).
 
