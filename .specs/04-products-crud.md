@@ -60,7 +60,14 @@ uploadRequestSchema = z.object({
 });
 ```
 
-The client form reuses the same schema (react-hook-form + zodResolver) for instant feedback, but **server validation is authoritative**.
+The client form relies on native HTML constraints (`required`, `min`, `maxLength`) for instant feedback and shows the server's `fieldErrors`; **server validation is authoritative**. Forms submit through `startTransition(() => formAction(formData))` so inputs keep their values when the server rejects them.
+
+## 3.1 Caching (Next.js 16 Cache Components)
+
+- Public storefront reads (`lib/products/queries.ts`) use a cookie-less anon client inside `'use cache'` functions tagged `products` / `stores` with `cacheLife('minutes')`. RLS still limits them to active products and merchant profiles.
+- Dashboard reads (`lib/products/merchant-queries.ts`) use the merchant's session and are never cached.
+- Every mutation calls `updateTag()` for the affected tag; actions that do not redirect also call `refresh()` so the dashboard re-renders.
+- Request-time data (`searchParams`, `params`, the session) is read inside `<Suspense>` boundaries.
 
 ## 4. Server Action Contracts (`app/dashboard/products/actions.ts`)
 
@@ -91,17 +98,17 @@ Client Component used by both `new` and `edit`.
 | Category | `Select` | enum labels in Spanish for UI, English values |
 | Price | `Input type=number step=0.01` | ≥ 0 |
 | Stock | `Input type=number step=1` | integer ≥ 0 |
-| Images | `ImageUploader` | up to 8, drag-to-reorder, first image = cover, remove button |
+| Images | `ImageUploader` | up to 8, reorder with left/right buttons, first image = cover, remove button |
 | Active | `Switch` | default on |
 
 `ImageUploader` behavior:
 1. Accept `image/jpeg, image/png, image/webp`; reject others client-side.
-2. Compress to WebP ≤1600 px using a free client library (e.g. `browser-image-compression`) or `<canvas>`.
-3. Call `createImageUploadUrls`, then `uploadToSignedUrl` per file with progress state.
-4. Keep `images: string[]` (paths) in form state; disable submit while uploads are pending.
-5. On failure show per-image error with retry.
+2. Compress to WebP ≤1600 px with `<canvas>` (`lib/images/compress-image.ts`, no extra dependency); keep the original if re-encoding does not shrink it.
+3. Call `createImageUploadUrls`, then `uploadToSignedUrl` per file with a per-image uploading state.
+4. Keep `images: string[]` (paths) in form state; disable submit while uploads are pending or failed.
+5. On failure show the per-image error; the merchant removes it and adds the photo again.
 
-UX: submit button shows pending state (`useActionState` / `useFormStatus`), toast on success/error, confirmation `AlertDialog` before delete.
+UX: submit button shows pending state (`useActionState`), inline alerts for success/error (no toast library in v1), confirmation `AlertDialog` before delete, optimistic visibility switch (`useOptimistic`).
 
 ## 6. Rendering Images
 

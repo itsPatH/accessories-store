@@ -36,6 +36,15 @@ export const requireUser = async (): Promise<User> => {
   return user;
 };
 
+// For Server Actions: returns null instead of redirecting so the action can return a Result.
+export const getMerchantSession = async (): Promise<MerchantSession | null> => {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  const profile = await getCurrentProfile();
+  if (profile?.role !== "merchant") return null;
+  return { user, profile };
+};
+
 // For pages: customers are sent to onboarding instead of seeing merchant UI.
 export const requireMerchant = async (): Promise<MerchantSession> => {
   const user = await requireUser();

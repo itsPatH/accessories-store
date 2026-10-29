@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { fail, ok, type Result } from "@/lib/result";
 import { getSafeRedirectPath } from "@/lib/safe-redirect";
+import { escapeLikePattern } from "@/lib/sql";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 
@@ -13,8 +14,6 @@ export interface SignUpSuccess {
 }
 
 const STORE_NAME_TAKEN = "Ese nombre de tienda ya está en uso";
-
-const escapeLikePattern = (value: string): string => value.replace(/[\\%_]/g, (match) => `\\${match}`);
 
 const getSiteUrl = (): string => process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
