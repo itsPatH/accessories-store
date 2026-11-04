@@ -14,7 +14,7 @@ export default function RegisterPage() {
     <Card>
       <CardHeader>
         <CardTitle>Crear cuenta</CardTitle>
-        <CardDescription>Compra accesorios o abre tu propia tienda.</CardDescription>
+        <CardDescription>El administrador habilitará el acceso a la tienda después de que confirmes tu email.</CardDescription>
       </CardHeader>
       <CardContent>
         <RegisterForm />

@@ -26,7 +26,7 @@ HttpOnly cookies mean the browser JavaScript cannot read the session, so the bro
 | `lib/supabase/config.ts` | both clients above | Env var validation + `withSecureCookieOptions()` (single place that forces the cookie flags) |
 | `lib/supabase/browser.ts` | Client Components (uploads only) | `createBrowserClient` with anon key, **no session**; only `uploadToSignedUrl` is allowed. Added with the products feature (04). |
 
-Route-group layout: `app/dashboard/layout.tsx` requires a signed-in user; merchant-only pages live in `app/dashboard/(merchant)/` and call `requireMerchant()`; `app/dashboard/onboarding` only requires a user. With `cacheComponents` enabled, every session read sits behind a `<Suspense>` boundary.
+Route-group layout: `app/dashboard/layout.tsx` requires a signed-in user; merchant-only pages live in `app/dashboard/(merchant)/` and call `requireMerchant()`; `app/dashboard/no-access` only requires a user. With `cacheComponents` enabled, every session read sits behind a `<Suspense>` boundary.
 
 Setting cookies from a Server Component throws; `setAll` wraps it in `try/catch` (the proxy already refreshed them).
 
@@ -34,22 +34,20 @@ Setting cookies from a Server Component throws; `setAll` wraps it in `try/catch`
 
 ### 3.1 Register — `/register`
 
-Form fields: `email`, `password` (min 8), `displayName`, `accountType` (`customer` | `merchant`), `storeName` (required if merchant).
+Form fields: `email`, `password` (min 8), `displayName`. Every new account is a `customer`.
 
 ```
 Server Action signUp(formData)
-  1. Zod validate (storeName required when accountType = merchant)
-  2. If merchant: check store name availability
-        select 1 from profiles where lower(store_name) = lower($1)   -- merchant profiles are public
-  3. supabase.auth.signUp({ email, password, options: {
+  1. Zod validate
+  2. supabase.auth.signUp({ email, password, options: {
         emailRedirectTo: `${SITE_URL}/auth/callback?next=/dashboard`,
-        data: { display_name, role: accountType, store_name } } })
-  4. Trigger handle_new_user creates the profile (see 02-database §4)
-  5. Return { data: { needsEmailConfirmation: true }, error: null }
+        data: { display_name } } })
+  3. Trigger handle_new_user creates the customer profile (see 02-database §4)
+  4. Return { data: { needsEmailConfirmation: true }, error: null }
      → UI shows "Check your email"
 ```
 
-The `role` sent in metadata is user-controlled, which is acceptable: self-service merchant sign-up is a product requirement. The trigger only honours it when a valid, available `store_name` is present.
+Metadata is user-controlled, so the trigger never reads a role from it. Registration stays open only so the client (and the developer's test account) can create their accounts; once they exist, the admin should turn off **Allow new users to sign up** in Supabase Authentication settings, since customers have nothing to do in v1.
 
 ### 3.2 Email confirmation — `app/auth/callback/route.ts`
 
@@ -69,9 +67,13 @@ Server Action signIn(formData)
 
 Server Action `signOut()` → `supabase.auth.signOut()` → `redirect('/')`. Rendered as a `<form action={signOut}>` button (POST, so it cannot be triggered by a link/prefetch).
 
-### 3.5 Become a merchant (existing customer, or merchant whose store name was taken at sign-up)
+### 3.5 Merchant access (admin only)
 
-`/dashboard/onboarding` → Server Action `becomeMerchant({ storeName })` → `supabase.rpc('become_merchant', { p_store_name })`. Error code `23505` → "Store name already taken".
+1. The client registers at `/register` and confirms the email.
+2. The admin runs `supabase/admin/grant-merchant.sql` in the SQL Editor with the client's email and store name.
+3. Until then, `/dashboard` sends the account to `/dashboard/no-access`, which explains that access is pending. There is no form or RPC to self-promote.
+
+Revoking: the same script has a commented revoke block (sets `is_active = false` on the account's products, since the catalog lists active products regardless of role, then `role = 'customer'`; RLS stops new writes).
 
 ## 4. Route Protection
 
@@ -92,7 +94,7 @@ The proxy does **not** query `profiles` (keep it fast). Per Next.js docs, the pr
 
 | Location | Check |
 | --- | --- |
-| `app/dashboard/layout.tsx` | `getUser()`; no user → `redirect('/login')`. Load profile; `role !== 'merchant'` → `redirect('/dashboard/onboarding')` (except on the onboarding page itself). |
+| `app/dashboard/layout.tsx` | `getUser()`; no user → `redirect('/login')`. Load profile; `role !== 'merchant'` → `redirect('/dashboard/no-access')` (except on that page itself). |
 | Every Server Action | Starts with `const user = await requireUser()`; merchant actions use `requireMerchant()`. Returns `{ data: null, error: 'Unauthorized' }` instead of throwing. |
 | Database | RLS is the final guard even if app checks have a bug. |
 

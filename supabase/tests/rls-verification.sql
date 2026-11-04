@@ -10,8 +10,9 @@
 
 -- Test identities
 --   A = merchant "RLS Test Store A"   aaaaaaaa-0000-4000-8000-000000000001
+--       (signs up as customer, then promoted like grant-merchant.sql does)
 --   B = customer                       bbbbbbbb-0000-4000-8000-000000000002
---   C = merchant sign-up with A's store name (must fall back to customer)
+--   C = sign-up that asks for merchant in metadata (must stay customer)
 --                                      cccccccc-0000-4000-8000-000000000003
 -- Products of A
 --   P1 active  dddddddd-0000-4000-8000-000000000001
@@ -42,10 +43,10 @@ values
    '{}', '{"display_name": "Customer B", "role": "customer"}', now(), now()),
   ('cccccccc-0000-4000-8000-000000000003', '00000000-0000-0000-0000-000000000000',
    'authenticated', 'authenticated', 'rls-merchant-c@example.test', '', now(),
-   '{}', '{"display_name": "Merchant C", "role": "merchant", "store_name": "rls test store a"}', now(), now());
+   '{}', '{"display_name": "Merchant C", "role": "merchant", "store_name": "RLS Test Store C"}', now(), now());
 
 -- ---------------------------------------------------------------------
--- 01 Sign-up trigger (as postgres)
+-- 01 Sign-up trigger, then admin grant (as postgres)
 -- ---------------------------------------------------------------------
 do $$
 declare
@@ -53,9 +54,15 @@ declare
   v_ok_b boolean;
   v_ok_c boolean;
 begin
+  -- Even with role = merchant in its metadata, A must start as customer.
   select exists (select 1 from public.profiles
                  where id = 'aaaaaaaa-0000-4000-8000-000000000001'
-                   and role = 'merchant' and store_name = 'RLS Test Store A') into v_ok_a;
+                   and role = 'customer' and store_name is null) into v_ok_a;
+
+  -- Admin grant, same statement as supabase/admin/grant-merchant.sql.
+  update public.profiles
+  set role = 'merchant', store_name = 'RLS Test Store A'
+  where id = 'aaaaaaaa-0000-4000-8000-000000000001';
   select exists (select 1 from public.profiles
                  where id = 'bbbbbbbb-0000-4000-8000-000000000002'
                    and role = 'customer') into v_ok_b;
@@ -64,9 +71,9 @@ begin
                    and role = 'customer' and store_name is null) into v_ok_c;
 
   perform set_config('rls.results', current_setting('rls.results')
-    || case when v_ok_a then 'PASS' else 'FAIL' end || '|01a trigger creates merchant profile|' || E'\n'
+    || case when v_ok_a then 'PASS' else 'FAIL' end || '|01a trigger ignores role in sign-up metadata|' || E'\n'
     || case when v_ok_b then 'PASS' else 'FAIL' end || '|01b trigger creates customer profile|' || E'\n'
-    || case when v_ok_c then 'PASS' else 'FAIL' end || '|01c duplicate store name falls back to customer|' || E'\n', false);
+    || case when v_ok_c then 'PASS' else 'FAIL' end || '|01c merchant request at sign-up stays customer|' || E'\n', false);
 end $$;
 
 -- ---------------------------------------------------------------------
@@ -219,26 +226,20 @@ end $$;
 
 do $$
 begin
-  perform public.become_merchant('rls test store a');
   perform set_config('rls.results', current_setting('rls.results')
-    || 'FAIL|13 become_merchant rejects a taken store name|call succeeded' || E'\n', false);
-exception when unique_violation then
-  perform set_config('rls.results', current_setting('rls.results')
-    || 'PASS|13 become_merchant rejects a taken store name|' || sqlerrm || E'\n', false);
+    || case when to_regprocedure('public.become_merchant(text)') is null then 'PASS' else 'FAIL' end
+    || '|13 no self-service merchant RPC exists|' || E'\n', false);
 end $$;
 
 do $$
-declare
-  v_role text;
 begin
-  perform public.become_merchant('RLS Test Store B');
-  select role into v_role from public.profiles where id = 'bbbbbbbb-0000-4000-8000-000000000002';
+  update public.profiles set role = 'merchant', store_name = 'RLS Test Store B'
+  where id = 'bbbbbbbb-0000-4000-8000-000000000002';
   perform set_config('rls.results', current_setting('rls.results')
-    || case when v_role = 'merchant' then 'PASS' else 'FAIL' end
-    || '|14 become_merchant upgrades the caller|role: ' || coalesce(v_role, 'null') || E'\n', false);
-exception when others then
+    || 'FAIL|14 customers cannot promote themselves|update succeeded' || E'\n', false);
+exception when insufficient_privilege then
   perform set_config('rls.results', current_setting('rls.results')
-    || 'FAIL|14 become_merchant upgrades the caller|' || sqlstate || ' ' || sqlerrm || E'\n', false);
+    || 'PASS|14 customers cannot promote themselves|' || sqlerrm || E'\n', false);
 end $$;
 
 reset role;

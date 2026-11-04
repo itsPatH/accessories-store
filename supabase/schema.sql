@@ -83,34 +83,22 @@ end;
 $$;
 
 -- Creates the profile right after Supabase Auth inserts the user.
--- Must never raise: a failure here would block sign-up.
+-- Every account starts as customer: metadata is user-controlled, so any
+-- role or store_name in it is ignored. The merchant role is granted by the
+-- admin with supabase/admin/grant-merchant.sql.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
 set search_path = ''
 as $$
-declare
-  v_display_name text := nullif(left(trim(new.raw_user_meta_data ->> 'display_name'), 80), '');
-  v_store_name   text := nullif(left(trim(new.raw_user_meta_data ->> 'store_name'), 80), '');
-  v_role         text := 'customer';
 begin
-  if char_length(v_store_name) < 2 then
-    v_store_name := null;
-  end if;
-
-  if new.raw_user_meta_data ->> 'role' = 'merchant' and v_store_name is not null then
-    v_role := 'merchant';
-  end if;
-
-  begin
-    insert into public.profiles (id, role, display_name, store_name)
-    values (new.id, v_role, v_display_name, v_store_name);
-  exception when unique_violation then
-    -- Store name already taken: register as customer; onboarding lets them pick another.
-    insert into public.profiles (id, role, display_name)
-    values (new.id, 'customer', v_display_name);
-  end;
+  insert into public.profiles (id, role, display_name)
+  values (
+    new.id,
+    'customer',
+    nullif(left(trim(new.raw_user_meta_data ->> 'display_name'), 80), '')
+  );
 
   return new;
 end;
@@ -132,31 +120,8 @@ as $$
   );
 $$;
 
--- RPC: upgrades the caller to merchant. Raises 23505 if the store name is taken.
-create or replace function public.become_merchant(p_store_name text)
-returns void
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  v_user_id    uuid := auth.uid();
-  v_store_name text := trim(p_store_name);
-begin
-  if v_user_id is null then
-    raise exception 'Not authenticated' using errcode = '28000';
-  end if;
-
-  if v_store_name is null or char_length(v_store_name) not between 2 and 80 then
-    raise exception 'Store name must be between 2 and 80 characters' using errcode = '22023';
-  end if;
-
-  update public.profiles
-  set role = 'merchant',
-      store_name = v_store_name
-  where id = v_user_id;
-end;
-$$;
+-- Removed: in a single-seller deployment users cannot promote themselves.
+drop function if exists public.become_merchant(text);
 
 -- Image paths must live inside the owner's storage folder: "{user_id}/..."
 create or replace function public.validate_product_images()
@@ -212,9 +177,6 @@ revoke insert, update, delete on public.profiles from anon, authenticated;
 grant update (display_name, store_name, avatar_url) on public.profiles to authenticated;
 
 revoke insert, update, delete on public.products from anon;
-
-revoke execute on function public.become_merchant(text) from public, anon;
-grant execute on function public.become_merchant(text) to authenticated;
 
 revoke execute on function public.handle_new_user() from public, anon, authenticated;
 

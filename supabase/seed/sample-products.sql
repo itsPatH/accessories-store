@@ -27,7 +27,8 @@ where id in (
   '5eed0000-0000-4000-8000-000000000002'
 );
 
--- Inserting into auth.users fires on_auth_user_created, exactly like a real sign-up.
+-- Inserting into auth.users fires on_auth_user_created, exactly like a real sign-up
+-- (profiles start as customer); then they are promoted like grant-merchant.sql does.
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
   raw_app_meta_data, raw_user_meta_data, created_at, updated_at
@@ -35,10 +36,18 @@ insert into auth.users (
 values
   ('5eed0000-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000',
    'authenticated', 'authenticated', 'demo-norte@example.test', '', now(),
-   '{}', '{"display_name": "Demo Norte", "role": "merchant", "store_name": "Tienda Demo Norte"}', now(), now()),
+   '{}', '{"display_name": "Demo Norte"}', now(), now()),
   ('5eed0000-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000',
    'authenticated', 'authenticated', 'demo-sur@example.test', '', now(),
-   '{}', '{"display_name": "Demo Sur", "role": "merchant", "store_name": "Tienda Demo Sur"}', now(), now());
+   '{}', '{"display_name": "Demo Sur"}', now(), now());
+
+update public.profiles
+set role = 'merchant',
+    store_name = case id
+      when '5eed0000-0000-4000-8000-000000000001' then 'Tienda Demo Norte'
+      else 'Tienda Demo Sur'
+    end
+where id in ('5eed0000-0000-4000-8000-000000000001', '5eed0000-0000-4000-8000-000000000002');
 
 -- Staggered created_at keeps the storefront order (created_at desc) deterministic.
 insert into public.products (id, user_id, title, description, category, price, stock, is_active, created_at)

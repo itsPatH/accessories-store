@@ -12,6 +12,8 @@ A multi-merchant marketplace for **phone accessories** (cases, screen protectors
 | Customer (signed in) | Everything a visitor can + manage own profile. (Cart/checkout are out of scope for v1.) |
 | Merchant (signed in, `role = 'merchant'`) | Everything a customer can + create, edit, activate/deactivate, delete **their own** products and upload their images. |
 
+**Single-seller deployment.** The store belongs to one client who manages it from one merchant account. Nobody can become a merchant from the app: the role is granted by the project admin with `supabase/admin/grant-merchant.sql` (the developer's test account may also hold it during QA). The schema keeps `user_id` ownership and RLS unchanged, so adding another seller later needs no migration.
+
 Out of scope for v1: payments, orders, cart, reviews, admin panel. They will get their own specs.
 
 ## 2. The $0 Stack
