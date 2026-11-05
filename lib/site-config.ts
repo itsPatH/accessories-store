@@ -14,7 +14,7 @@ export const SITE_CONFIG: SiteConfig = {
   name: "Guaro Cell",
   tagline: "Accesorios para tu celular, tecnología y más.",
   location: "Barquisimeto · Lara",
-  whatsappNumber: null,
+  whatsappNumber: "584127519145",
   instagramUrl: null,
   tiktokUrl: null,
 };
@@ -23,7 +23,7 @@ export const getSiteUrl = (): string => process.env.NEXT_PUBLIC_SITE_URL ?? "htt
 
 export const getWhatsAppUrl = (message?: string): string | null => {
   if (!SITE_CONFIG.whatsappNumber) return null;
-  const url = new URL(`https://wa.me/${SITE_CONFIG.whatsappNumber}`);
-  if (message) url.searchParams.set("text", message);
-  return url.toString();
+  const url = `https://wa.me/${SITE_CONFIG.whatsappNumber}`;
+  // encodeURIComponent (%20) instead of URLSearchParams (+): some WhatsApp clients show "+" literally.
+  return message ? `${url}?text=${encodeURIComponent(message)}` : url;
 };
