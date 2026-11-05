@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSyncExternalStore } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -32,4 +33,12 @@ export const NavLinks = ({ activePath }: { activePath: string | null }) => (
   </nav>
 );
 
-export const MainNav = () => <NavLinks activePath={usePathname()} />;
+const subscribeToNothing = (): (() => void) => () => {};
+
+// The active link is resolved in the browser only. Vercel can serve a cached shell of "/" whose
+// prerendered pathname does not match, and React does not patch attribute mismatches on hydration.
+export const MainNav = () => {
+  const pathname = usePathname();
+  const isClient = useSyncExternalStore(subscribeToNothing, () => true, () => false);
+  return <NavLinks activePath={isClient ? pathname : null} />;
+};
