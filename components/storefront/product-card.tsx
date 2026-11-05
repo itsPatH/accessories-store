@@ -47,7 +47,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           {product.title}
         </Link>
         <p className="mt-auto text-2xl font-extrabold text-brand-strong">{formatPrice(product.price)}</p>
-        <OrderButton product={product} />
+        <OrderButton product={product} compactOnMobile />
       </div>
     </article>
   );

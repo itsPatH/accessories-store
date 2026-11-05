@@ -93,7 +93,7 @@ const Catalog = async ({ searchParams }: { searchParams: Promise<SearchParams> }
         </p>
       ) : (
         <>
-          <p className="text-sm text-muted-foreground">{totalCount} productos</p>
+          <p className="text-sm text-muted-foreground">{totalCount} {totalCount === 1 ? "producto" : "productos"}</p>
           <ProductGrid products={products} />
         </>
       )}

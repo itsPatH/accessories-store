@@ -29,22 +29,40 @@ test.describe("home", () => {
     await expectNoHorizontalScroll(page);
   });
 
+  // Catches a stale or broken stylesheet: the layout still renders but brand colors are missing.
+  test("brand colors are applied", async ({ page }) => {
+    await expect(page.getByRole("banner")).toHaveCSS("background-color", "rgb(10, 31, 61)");
+    await expect(page.locator("body")).toHaveCSS("background-color", "rgb(248, 250, 252)");
+  });
+
   test("mobile nav is visible and the current page is marked", async ({ page }) => {
     const nav = page.getByRole("navigation", { name: "Principal" }).filter({ visible: true });
     await expect(nav).toHaveCount(1);
     await expect(nav.getByRole("link", { name: "Inicio" })).toHaveAttribute("aria-current", "page");
     await expect(nav.getByRole("link", { name: "Catálogo" })).toBeVisible();
-    await expect(nav.getByRole("link", { name: "Contacto" })).toBeVisible();
+    await expect(nav.getByRole("link")).toHaveCount(2);
   });
 
   test("has no public sign-in or sign-up link", async ({ page }) => {
     await expect(page.locator('a[href="/login"], a[href="/register"]')).toHaveCount(0);
   });
 
-  test("Contacto scrolls to the footer", async ({ page }) => {
-    await page.getByRole("navigation", { name: "Principal" }).filter({ visible: true }).getByRole("link", { name: "Contacto" }).click();
-    await expect(page.locator("#contacto")).toBeInViewport();
+  test("footer shows the store location", async ({ page }) => {
     await expect(page.locator("#contacto")).toContainText("Barquisimeto · Lara");
+  });
+
+  test("footer links to the store's social profiles and the developer", async ({ page }) => {
+    const footer = page.locator("#contacto");
+    await expect(footer.getByRole("link", { name: "Instagram" })).toHaveAttribute("href", "https://www.instagram.com/guarocell1");
+    await expect(footer.getByRole("link", { name: "Facebook" })).toHaveAttribute(
+      "href",
+      "https://www.facebook.com/profile.php?id=61596323247710",
+    );
+    await expect(footer.getByRole("link", { name: "WhatsApp" })).toHaveAttribute("href", /^https:\/\/wa\.me\/\d+$/);
+    const credit = footer.getByRole("link", { name: /Sitio web por/ });
+    await expect(credit).toHaveAttribute("href", /^https:\/\//);
+    const box = await credit.boundingBox();
+    expect(box && box.height >= 24, "credit link is too small to tap").toBeTruthy();
   });
 
   test("category tile opens the filtered catalog", async ({ page }) => {
@@ -77,6 +95,12 @@ test.describe("catalog", () => {
     const viewport = page.viewportSize();
     expect(box && viewport && box.width < viewport.width / 2).toBeTruthy();
     await expectNoHorizontalScroll(page);
+
+    // Button labels must fit inside the narrow cards instead of being clipped.
+    const clippedButtons = await cards.locator("a.rounded-full").evaluateAll((links) =>
+      links.filter((link) => link.scrollWidth > link.clientWidth + 1).map((link) => link.textContent),
+    );
+    expect(clippedButtons, "order buttons with clipped text").toEqual([]);
   });
 });
 

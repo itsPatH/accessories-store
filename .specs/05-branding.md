@@ -12,7 +12,7 @@ Status: **Draft for review** · Related: [01-architecture](./01-architecture.md)
 | Currency | USD, `en-US` format (`$8.99`), 2 decimals (`lib/format.ts`) |
 | Font | Plus Jakarta Sans (`next/font/google`, free) |
 
-Store details live in `lib/site-config.ts`. Contact values (`whatsappNumber`, `instagramUrl`, `tiktokUrl`) are `null` until the client provides them; every element that needs one is hidden while it is `null`.
+Store details live in `lib/site-config.ts`. Contact values (`whatsappNumber`, `instagramUrl`, `facebookUrl`, `tiktokUrl`) are `null` until the client provides them; every element that needs one is hidden while it is `null`. Links are stored without share-tracking parameters. Configured: WhatsApp, Instagram, Facebook (TikTok pending).
 
 ## 2. Palette
 
@@ -41,11 +41,11 @@ Accessibility: white on `#00B4FF` is below WCAG AA (≈2.4:1), so solid surfaces
 
 ## 4. Storefront layout
 
-- **Header** (navy, sticky): logo, nav `Inicio` · `Catálogo` · `Contacto` (scrolls to the footer), search icon → `/catalogo`. A dashboard icon appears only for signed-in users; there is **no public sign-in link** (single-seller store, 03-auth-flow §3.5).
+- **Header** (navy, sticky): logo, nav `Inicio` · `Catálogo`, search icon → `/catalogo`. A dashboard icon appears only for signed-in users; there is **no public sign-in link** (single-seller store, 03-auth-flow §3.5).
 - **Home `/`**: hero (headline, CTA "Explorar catálogo", "Compra segura"), category tiles, "Productos destacados".
 - **Product card**: image, category chip, title, price, order button.
 - **Product detail**: photo carousel (arrows, swipe, keyboard, thumbnails), no merchant link, WhatsApp button only (no "Ver producto" self-link).
-- **Footer** (`#contacto`): logo + tagline, location, social icons (when configured), "Delivery", "Compra segura", "Atención personalizada", copyright.
+- **Footer** (`#contacto`): logo + tagline, location, social icons (when configured), "Delivery", "Compra segura", "Atención personalizada", copyright, and a discreet developer credit ("Sitio web por … · ¿Quieres una web para tu negocio?") linking to `SITE_CONFIG.developer.url`.
 
 ## 5. Ordering (v1)
 
@@ -53,6 +53,6 @@ There is no cart. The order button opens WhatsApp with a prefilled message (prod
 
 ## 6. Mobile QA
 
-`tests/e2e/mobile.spec.ts` (Playwright, `pnpm test:e2e`) runs on two phone profiles (Galaxy S9+ 320 px, iPhone 14 390 px) using the system Microsoft Edge, so no browser download is needed. It checks: no horizontal scroll on home, catalog, product and login; mobile nav and active state; no public sign-in links; Contacto scrolls to the footer; category tiles filter the catalog; search empty state; two-column product grid; product detail without store link or self-link; gallery arrows, wrap-around, thumbnails and swipe; 404 for unknown products.
+`tests/e2e/mobile.spec.ts` (Playwright, `pnpm test:e2e`) runs on two phone profiles (Galaxy S9+ 320 px, iPhone 14 390 px) using the system Microsoft Edge, so no browser download is needed. It checks: no horizontal scroll on home, catalog, product and login; mobile nav and active state; no public sign-in links; footer location and social links; category tiles filter the catalog; search empty state; two-column product grid; product detail without store link or self-link; gallery arrows, wrap-around, thumbnails and swipe; 404 for unknown products.
 
 Tests read live catalog data: checks that need products, or a product with 2+ photos, are skipped when that data does not exist. `E2E_BASE_URL` points them at another server (e.g. `next start`).
