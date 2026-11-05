@@ -8,7 +8,8 @@ Status: **Draft for review** · Related: [01-architecture](./01-architecture.md)
 
 | Route | Rendering | Content |
 | --- | --- | --- |
-| `/` | Server Component | Latest active products grid, category chips, search box. Query params: `?q=&category=&page=` |
+| `/` | Server Component | Landing (05-branding §3): hero, category tiles linking to `/catalogo?category=`, "Productos destacados" (8 newest active in-stock products). |
+| `/catalogo` | Server Component | Full catalog: search box, category chips, paginated grid. Query params: `?q=&category=&page=` |
 | `/products/[id]` | Server Component | Gallery, title, price, stock status ("Out of stock" when `stock = 0`), description, merchant `store_name` linking to the store. 404 if not found or inactive. |
 | `/stores/[merchantId]` | Server Component | Merchant `store_name`, avatar, their active products. 404 if not a merchant. |
 

@@ -5,6 +5,7 @@ import { ImageOff, Store } from "lucide-react";
 import { Suspense } from "react";
 import { z } from "zod";
 
+import { OrderButton } from "@/components/storefront/order-button";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/format";
 import { PRODUCT_CATEGORY_LABELS } from "@/lib/products/categories";
@@ -13,9 +14,11 @@ import { getProductImageUrl } from "@/lib/storage";
 
 export default function ProductPage({ params }: PageProps<"/products/[id]">) {
   return (
-    <Suspense fallback={<div className="aspect-square max-w-lg animate-pulse rounded-lg bg-muted" />}>
-      <ProductDetail params={params} />
-    </Suspense>
+    <div className="mx-auto w-full max-w-6xl px-4 py-10">
+      <Suspense fallback={<div className="aspect-square max-w-lg animate-pulse rounded-2xl bg-muted" />}>
+        <ProductDetail params={params} />
+      </Suspense>
+    </div>
   );
 }
 
@@ -58,14 +61,17 @@ const ProductDetail = async ({ params }: { params: Promise<{ id: string }> }) =>
       </div>
 
       <div className="grid content-start gap-4">
-        <span className="text-sm text-muted-foreground">{PRODUCT_CATEGORY_LABELS[product.category]}</span>
-        <h1 className="text-3xl font-semibold tracking-tight">{product.title}</h1>
-        <p className="text-2xl font-semibold">{formatPrice(product.price)}</p>
+        <span className="w-fit rounded-full bg-secondary px-3 py-0.5 text-sm font-medium text-secondary-foreground">
+          {PRODUCT_CATEGORY_LABELS[product.category]}
+        </span>
+        <h1 className="text-3xl font-extrabold tracking-tight text-navy">{product.title}</h1>
+        <p className="text-3xl font-extrabold text-brand-strong">{formatPrice(product.price)}</p>
         {product.stock === 0 ? (
           <Badge variant="destructive" className="w-fit">Agotado</Badge>
         ) : (
           <Badge variant="secondary" className="w-fit">{product.stock} disponibles</Badge>
         )}
+        {product.stock > 0 && <OrderButton product={product} className="sm:max-w-xs" />}
         {product.store && (
           <Link
             href={`/stores/${product.store.id}`}

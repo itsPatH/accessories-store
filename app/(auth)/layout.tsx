@@ -1,12 +1,11 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Smartphone } from "lucide-react";
 
 export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-muted/40 px-4 py-12">
-      <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
-        <Smartphone className="size-5" />
-        Guaro Cell
+    <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-navy px-4 py-12">
+      <Link href="/" aria-label="Guaro Cell, inicio">
+        <Image src="/images/logo-badge.webp" alt="Guaro Cell" width={140} height={140} priority className="rounded-full" />
       </Link>
       <div className="w-full max-w-md">{children}</div>
     </main>

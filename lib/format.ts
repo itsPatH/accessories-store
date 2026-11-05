@@ -1,11 +1,12 @@
 // Single place to change the store currency and locale.
-const STORE_LOCALE = "es-CL";
-const STORE_CURRENCY = "CLP";
+// en-US keeps the "$8.99" format the store uses; prices are in USD.
+const STORE_LOCALE = "en-US";
+const STORE_CURRENCY = "USD";
 
 const priceFormatter = new Intl.NumberFormat(STORE_LOCALE, {
   style: "currency",
   currency: STORE_CURRENCY,
-  minimumFractionDigits: 0,
+  minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 

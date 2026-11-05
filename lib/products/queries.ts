@@ -111,3 +111,24 @@ export const getStoreProducts = async (merchantId: string): Promise<CatalogProdu
   }
   return data;
 };
+
+// Home page "Productos destacados": newest in-stock products first.
+export const getFeaturedProducts = async (limit: number): Promise<CatalogProduct[]> => {
+  "use cache";
+  cacheTag(PRODUCTS_CACHE_TAG);
+  cacheLife("minutes");
+
+  const { data, error } = await createSupabasePublicClient()
+    .from("products")
+    .select(CATALOG_COLUMNS)
+    .eq("is_active", true)
+    .gt("stock", 0)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("getFeaturedProducts failed", error.code, error.message);
+    return [];
+  }
+  return data;
+};

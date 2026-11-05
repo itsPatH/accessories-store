@@ -48,6 +48,7 @@ Spec-Driven Development: read the relevant spec **before** implementing, and upd
 - `.specs/02-database.md` — tables, constraints, indexes, triggers, RLS and Storage policies. Executable version: `supabase/schema.sql`.
 - `.specs/03-auth-flow.md` — Supabase Auth, HttpOnly cookie sessions, `proxy.ts`, merchant role.
 - `.specs/04-products-crud.md` — merchant dashboard, public storefront, Server Action contracts, forms.
+- `.specs/05-branding.md` — Guaro Cell identity, palette, assets, storefront layout, WhatsApp ordering.
 
 ## 5. Code Conventions
 - All identifiers, types, DB columns, and function names in **English**.

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { LogOut, Smartphone } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Suspense, type ReactNode } from "react";
 
+import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { getCurrentProfile, requireUser } from "@/lib/auth";
 
@@ -25,16 +26,18 @@ const AuthenticatedShell = async ({ children }: { children: ReactNode }) => {
 
   return (
     <>
-      <header className="border-b">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
-          <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-            <Smartphone className="size-5" />
-            Panel de vendedor
-          </Link>
+      <header className="bg-navy text-white">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
+          <div className="flex items-center gap-4">
+            <Logo />
+            <Link href="/dashboard" className="hidden text-sm font-semibold text-white/80 hover:text-white sm:inline">
+              Panel de vendedor
+            </Link>
+          </div>
           <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-muted-foreground sm:inline">{accountLabel}</span>
+            <span className="hidden text-sm text-white/70 sm:inline">{accountLabel}</span>
             <form action={signOut}>
-              <Button type="submit" variant="ghost" size="sm">
+              <Button type="submit" variant="ghost" size="sm" className="text-white hover:bg-white/10 hover:text-white">
                 <LogOut />
                 Salir
               </Button>
