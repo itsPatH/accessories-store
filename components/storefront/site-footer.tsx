@@ -3,7 +3,7 @@ import { cacheLife } from "next/cache";
 import type { ComponentType } from "react";
 
 import { Logo } from "@/components/brand/logo";
-import { InstagramIcon, TikTokIcon, WhatsAppIcon } from "@/components/brand/social-icons";
+import { FacebookIcon, InstagramIcon, TikTokIcon, WhatsAppIcon } from "@/components/brand/social-icons";
 import { getWhatsAppUrl, SITE_CONFIG } from "@/lib/site-config";
 
 const FEATURES: { icon: LucideIcon; label: string }[] = [
@@ -22,6 +22,7 @@ const getSocialLinks = (): SocialLink[] => {
   const whatsappUrl = getWhatsAppUrl();
   const links: (SocialLink | null)[] = [
     SITE_CONFIG.instagramUrl ? { href: SITE_CONFIG.instagramUrl, label: "Instagram", icon: InstagramIcon } : null,
+    SITE_CONFIG.facebookUrl ? { href: SITE_CONFIG.facebookUrl, label: "Facebook", icon: FacebookIcon } : null,
     SITE_CONFIG.tiktokUrl ? { href: SITE_CONFIG.tiktokUrl, label: "TikTok", icon: TikTokIcon } : null,
     whatsappUrl ? { href: whatsappUrl, label: "WhatsApp", icon: WhatsAppIcon } : null,
   ];
@@ -70,8 +71,21 @@ export const SiteFooter = () => {
         </ul>
       </div>
 
-      <div className="relative border-t border-white/10 py-4 text-center text-xs text-white/60">
-        © <CopyrightYear /> {SITE_CONFIG.name}. Todos los derechos reservados.
+      <div className="relative grid gap-1.5 border-t border-white/10 px-4 py-4 text-center text-xs text-white/60">
+        <p>
+          © <CopyrightYear /> {SITE_CONFIG.name}. Todos los derechos reservados.
+        </p>
+        {/* One link, so the whole credit is a single tap target. */}
+        <a
+          href={SITE_CONFIG.developer.url}
+          target="_blank"
+          rel="noopener"
+          className="group mx-auto w-fit py-1 underline-offset-4"
+        >
+          Sitio web por <span className="font-semibold text-white/85 group-hover:underline">{SITE_CONFIG.developer.name}</span>
+          {" · "}
+          <span className="text-brand group-hover:underline">¿Quieres una web para tu negocio?</span>
+        </a>
       </div>
     </footer>
   );

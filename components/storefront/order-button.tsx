@@ -12,10 +12,17 @@ interface OrderButtonProps {
   className?: string;
   // The detail page passes false: linking to the page you are on is pointless.
   showProductLinkFallback?: boolean;
+  // Two-column phone grids are ~160px wide: show "Pedir" there and keep the full label for screen readers.
+  compactOnMobile?: boolean;
 }
 
 // v1 has no cart: orders go through WhatsApp. Until the number is configured it links to the product.
-export const OrderButton = ({ product, className, showProductLinkFallback = true }: OrderButtonProps) => {
+export const OrderButton = ({
+  product,
+  className,
+  showProductLinkFallback = true,
+  compactOnMobile = false,
+}: OrderButtonProps) => {
   const productUrl = `/products/${product.id}`;
   const whatsappUrl = getWhatsAppUrl(
     `Hola, me interesa este producto: ${product.title} (${formatPrice(product.price)}) ${getSiteUrl()}${productUrl}`,
@@ -27,7 +34,9 @@ export const OrderButton = ({ product, className, showProductLinkFallback = true
   return whatsappUrl ? (
     <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className={classes}>
       <WhatsAppIcon className="size-4" />
-      Pedir por WhatsApp
+      <span>
+        Pedir<span className={compactOnMobile ? "sr-only sm:not-sr-only" : undefined}> por WhatsApp</span>
+      </span>
     </a>
   ) : (
     <Link href={productUrl} className={classes}>

@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/", label: "Inicio" },
   { href: "/catalogo", label: "Catálogo" },
-  { href: "#contacto", label: "Contacto" },
 ] as const;
 
 // Hook-free version: also the Suspense fallback, since usePathname() is request-time data on dynamic routes.
