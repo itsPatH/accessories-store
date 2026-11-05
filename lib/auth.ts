@@ -45,10 +45,10 @@ export const getMerchantSession = async (): Promise<MerchantSession | null> => {
   return { user, profile };
 };
 
-// For pages: customers are sent to onboarding instead of seeing merchant UI.
+// For pages: non-merchants see the pending-access page instead of merchant UI.
 export const requireMerchant = async (): Promise<MerchantSession> => {
   const user = await requireUser();
   const profile = await getCurrentProfile();
-  if (profile?.role !== "merchant") redirect("/dashboard/onboarding");
+  if (profile?.role !== "merchant") redirect("/dashboard/no-access");
   return { user, profile };
 };

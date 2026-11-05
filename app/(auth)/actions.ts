@@ -5,15 +5,12 @@ import { redirect } from "next/navigation";
 
 import { fail, ok, type Result } from "@/lib/result";
 import { getSafeRedirectPath } from "@/lib/safe-redirect";
-import { escapeLikePattern } from "@/lib/sql";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 
 export interface SignUpSuccess {
   email: string;
 }
-
-const STORE_NAME_TAKEN = "Ese nombre de tienda ya está en uso";
 
 const getSiteUrl = (): string => process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -26,32 +23,15 @@ export const signUp = async (
     return fail("Revisa los campos marcados", z.flattenError(parsed.error).fieldErrors);
   }
 
-  const { email, password, displayName, accountType, storeName } = parsed.data;
+  const { email, password, displayName } = parsed.data;
   const supabase = await createSupabaseServerClient();
-
-  if (accountType === "merchant" && storeName) {
-    // Merchant profiles are publicly readable, so availability can be checked before sign-up.
-    const { data: existingStore } = await supabase
-      .from("profiles")
-      .select("id")
-      .ilike("store_name", escapeLikePattern(storeName))
-      .maybeSingle();
-
-    if (existingStore) {
-      return fail(STORE_NAME_TAKEN, { storeName: [STORE_NAME_TAKEN] });
-    }
-  }
 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: `${getSiteUrl()}/auth/callback?next=/dashboard`,
-      data: {
-        display_name: displayName,
-        role: accountType,
-        store_name: accountType === "merchant" ? storeName : null,
-      },
+      data: { display_name: displayName },
     },
   });
 

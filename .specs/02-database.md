@@ -33,7 +33,7 @@ One row per auth user, created automatically by a trigger after sign-up.
 
 Design notes:
 - **No private data in `profiles`.** Email lives in `auth.users` and is never exposed. That allows merchant profiles to be publicly readable (storefront needs `store_name`).
-- `role` cannot be changed through `UPDATE`: users only have column-level `UPDATE` privilege on `display_name`, `store_name`, `avatar_url`. Becoming a merchant goes through the `become_merchant()` function.
+- `role` cannot be changed through `UPDATE`: users only have column-level `UPDATE` privilege on `display_name`, `store_name`, `avatar_url`. There is no self-service path to merchant: the admin grants it from the SQL Editor (`supabase/admin/grant-merchant.sql`), which runs as `postgres`.
 
 ### 2.2 `public.products`
 
@@ -66,11 +66,10 @@ Categories: `case`, `screen_protector`, `charger`, `cable`, `headphones`, `power
 
 | Name | Kind | Behavior |
 | --- | --- | --- |
-| `handle_new_user()` | `security definer`, trigger `after insert on auth.users` | Creates the profile. Reads `display_name`, `role`, `store_name` from `raw_user_meta_data`. Becomes merchant only if `role = 'merchant'` **and** a valid `store_name` is given; if the store name is taken, falls back to `customer` so **sign-up never fails** because of the profile. |
+| `handle_new_user()` | `security definer`, trigger `after insert on auth.users` | Creates the profile as `customer` with `display_name` from `raw_user_meta_data`. Any `role` or `store_name` in the metadata is **ignored** (metadata is user-controlled). Never raises, so sign-up cannot fail because of the profile. |
 | `set_updated_at()` | trigger `before update` on both tables | Sets `updated_at = now()` |
 | `validate_product_images()` | trigger `before insert or update` on `products` | Rejects any image path that does not start with `{user_id}/` or contains `..` |
 | `is_merchant()` | `security definer`, `stable` | `true` if `auth.uid()` has `role = 'merchant'`. Used inside RLS policies. |
-| `become_merchant(p_store_name text)` | `security definer`, RPC for `authenticated` only | Upgrades the caller to merchant and sets `store_name`. Raises `23505` if the name is taken. |
 
 All functions use `set search_path = ''` and fully-qualified names (Supabase security advisor requirement).
 
@@ -117,7 +116,7 @@ Object path convention: `{user_id}/{uuid}.webp`.
 
 ## 6. Verification Checklist (run after applying the schema)
 
-1. Sign up user A (merchant) and user B (customer) → both rows exist in `profiles` with the right role.
+1. Sign up users A and B → both profiles are `customer`, even if A sends `role: merchant` in metadata. Promote A with `grant-merchant.sql`; `become_merchant()` does not exist.
 2. As B: `insert into products` → **denied** (not a merchant).
 3. As A: insert a product → OK; `user_id` defaults to A.
 4. As B: `update products set price = 0 where user_id = A` → 0 rows affected.

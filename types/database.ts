@@ -89,10 +89,6 @@ export interface Database {
     };
     Views: { [_ in never]: never };
     Functions: {
-      become_merchant: {
-        Args: { p_store_name: string };
-        Returns: undefined;
-      };
       is_merchant: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;

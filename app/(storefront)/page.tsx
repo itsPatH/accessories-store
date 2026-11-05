@@ -40,7 +40,7 @@ export default function HomePage({ searchParams }: PageProps<"/">) {
     <div className="grid gap-8">
       <section className="grid gap-2">
         <h1 className="text-3xl font-semibold tracking-tight">Accesorios para tu teléfono</h1>
-        <p className="text-muted-foreground">Fundas, cargadores, cables y más, de vendedores independientes.</p>
+        <p className="text-muted-foreground">Fundas, cargadores, cables y más...</p>
       </section>
       {/* Filters come from the URL (request-time), so the catalog streams in. */}
       <Suspense fallback={<ProductGridSkeleton />}>

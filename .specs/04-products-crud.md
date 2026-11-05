@@ -23,7 +23,7 @@ Pagination: 24 per page, ordered by `created_at desc`, using `.range(from, to)`.
 | `/dashboard/products/new` | Product form (create) |
 | `/dashboard/products/[id]/edit` | Product form (edit). 404 if not owned (RLS returns no row). |
 | `/dashboard/settings` | Edit `display_name`, `store_name`, `avatar_url` |
-| `/dashboard/onboarding` | Become a merchant (store name) |
+| `/dashboard/no-access` | Shown to signed-in non-merchants: access is granted by the admin (03-auth-flow §3.5) |
 
 ## 2. Shared Types
 
@@ -81,7 +81,6 @@ All actions: `'use server'`, call `requireMerchant()`, Zod-validate, never accep
 | `setProductActive` | `{ id, isActive: boolean }` | `{ id; isActive }` | Toggle visibility. Optimistic UI in the table. |
 | `deleteProduct` | `productIdSchema` | `{ id: string }` | Read row's `images`, delete row (RLS-scoped), then `storage.remove(images)`. Storage failure is logged, not surfaced (row already gone). |
 | `updateStoreProfile` | `{ displayName?, storeName, avatarUrl? }` | `Profile` | Update own profile; `23505` → "Store name already taken". |
-| `becomeMerchant` | `{ storeName }` | `{ ok: true }` | `rpc('become_merchant')`. |
 
 Error messages returned to the UI are generic and user-friendly; raw Postgres errors are logged server-side only. Map: `23505` → duplicate, `42501`/RLS denial → "Not allowed", Zod → first field error per field (`fieldErrors` may be added to `Result` for forms).
 
@@ -117,7 +116,7 @@ UX: submit button shows pending state (`useActionState`), inline alerts for succ
 ## 7. Acceptance Criteria
 
 - A merchant can create, edit, deactivate, reactivate and delete only their own products.
-- A customer visiting `/dashboard/products/new` is redirected to onboarding; calling `createProduct` directly returns `Unauthorized` and RLS would also reject it.
+- A customer visiting `/dashboard/products/new` is redirected to `/dashboard/no-access`; calling `createProduct` directly returns `Unauthorized` and RLS would also reject it.
 - Inactive products never appear on `/`, `/stores/[id]` or `/products/[id]` for other users.
 - Image binaries never pass through a Next.js function (verify in the Network tab: PUT goes to `*.supabase.co`).
 - `pnpm build` and `pnpm lint` pass with no `any`.

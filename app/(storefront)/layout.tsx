@@ -12,7 +12,7 @@ export default function StorefrontLayout({ children }: LayoutProps<"/">) {
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <Smartphone className="size-5" />
-            Accesorios Store
+            Guaro Cell
           </Link>
           {/* The account link reads the session; the rest of the header stays in the static shell. */}
           <Suspense fallback={<div className="h-8 w-24" />}>

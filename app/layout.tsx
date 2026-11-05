@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Accesorios Store", template: "%s · Accesorios Store" },
+  title: { default: "Guaro Cell", template: "%s · Guaro Cell" },
   description: "Marketplace de accesorios para teléfonos.",
 };
 
