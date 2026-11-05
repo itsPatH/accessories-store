@@ -31,6 +31,7 @@ Never run `npm` or `yarn` (and never commit `package-lock.json` / `yarn.lock`).
 | Production build + type validation | `pnpm build` |
 | Lint | `pnpm lint` |
 | Full type check | `pnpm type-check` (`tsc --noEmit`) |
+| Mobile e2e tests (system Edge, reuses `pnpm dev`) | `pnpm test:e2e` · report: `pnpm test:e2e:report` |
 
 ## 3. Security Principles
 - **RLS is mandatory.** Every table in `public` has Row Level Security enabled with explicit policies. A table without RLS must never be merged.
@@ -48,6 +49,7 @@ Spec-Driven Development: read the relevant spec **before** implementing, and upd
 - `.specs/02-database.md` — tables, constraints, indexes, triggers, RLS and Storage policies. Executable version: `supabase/schema.sql`.
 - `.specs/03-auth-flow.md` — Supabase Auth, HttpOnly cookie sessions, `proxy.ts`, merchant role.
 - `.specs/04-products-crud.md` — merchant dashboard, public storefront, Server Action contracts, forms.
+- `.specs/05-branding.md` — Guaro Cell identity, palette, assets, storefront layout, WhatsApp ordering.
 
 ## 5. Code Conventions
 - All identifiers, types, DB columns, and function names in **English**.

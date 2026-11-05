@@ -8,9 +8,11 @@ import { getPublicStore, getStoreProducts } from "@/lib/products/queries";
 
 export default function StorePage({ params }: PageProps<"/stores/[merchantId]">) {
   return (
-    <Suspense fallback={<ProductGridSkeleton />}>
-      <StoreDetail params={params} />
-    </Suspense>
+    <div className="mx-auto w-full max-w-6xl px-4 py-10">
+      <Suspense fallback={<ProductGridSkeleton />}>
+        <StoreDetail params={params} />
+      </Suspense>
+    </div>
   );
 }
 

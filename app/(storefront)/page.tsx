@@ -1,125 +1,131 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Search } from "lucide-react";
-import { Suspense } from "react";
+import { ArrowRight, ShieldCheck, Zap } from "lucide-react";
+import { Suspense, type ReactNode } from "react";
 
+import { PRODUCT_CATEGORY_ICONS } from "@/components/storefront/category-icons";
 import { ProductGrid, ProductGridSkeleton } from "@/components/storefront/product-card";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { isProductCategory, PRODUCT_CATEGORIES, PRODUCT_CATEGORY_LABELS } from "@/lib/products/categories";
-import { getCatalogPage, type CatalogFilters } from "@/lib/products/queries";
+import { buttonVariants } from "@/components/ui/button";
+import { PRODUCT_CATEGORIES, PRODUCT_CATEGORY_LABELS } from "@/lib/products/categories";
+import { getFeaturedProducts } from "@/lib/products/queries";
 import { cn } from "@/lib/utils";
 
-type SearchParams = Awaited<PageProps<"/">["searchParams"]>;
+const FEATURED_PRODUCTS_LIMIT = 8;
 
-const MAX_QUERY_LENGTH = 100;
-
-const firstValue = (value: string | string[] | undefined): string | undefined =>
-  Array.isArray(value) ? value[0] : value;
-
-const parseFilters = (searchParams: SearchParams): CatalogFilters => {
-  const category = firstValue(searchParams.category);
-  const page = Number.parseInt(firstValue(searchParams.page) ?? "1", 10);
-  return {
-    query: (firstValue(searchParams.q) ?? "").trim().slice(0, MAX_QUERY_LENGTH),
-    category: isProductCategory(category) ? category : null,
-    page: Number.isInteger(page) && page > 0 ? page : 1,
-  };
-};
-
-const buildCatalogHref = (filters: CatalogFilters): string => {
-  const params = new URLSearchParams();
-  if (filters.query) params.set("q", filters.query);
-  if (filters.category) params.set("category", filters.category);
-  if (filters.page > 1) params.set("page", String(filters.page));
-  const search = params.toString();
-  return search ? `/?${search}` : "/";
-};
-
-export default function HomePage({ searchParams }: PageProps<"/">) {
+export default function HomePage() {
   return (
-    <div className="grid gap-8">
-      <section className="grid gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Accesorios para tu teléfono</h1>
-        <p className="text-muted-foreground">Fundas, cargadores, cables y más...</p>
-      </section>
-      {/* Filters come from the URL (request-time), so the catalog streams in. */}
-      <Suspense fallback={<ProductGridSkeleton />}>
-        <Catalog searchParams={searchParams} />
-      </Suspense>
-    </div>
+    <>
+      <Hero />
+      <div className="mx-auto grid w-full max-w-6xl gap-12 px-4 py-12">
+        <Section title="Compra por categoría" moreHref="/catalogo" moreLabel="Ver todas">
+          <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8">
+            {PRODUCT_CATEGORIES.map((category) => {
+              const Icon = PRODUCT_CATEGORY_ICONS[category];
+              return (
+                <li key={category}>
+                  <Link
+                    href={`/catalogo?category=${category}`}
+                    className="grid h-full justify-items-center gap-2 rounded-2xl border border-transparent bg-accent px-1.5 py-4 text-center text-xs font-semibold sm:text-sm text-navy transition-colors hover:border-brand"
+                  >
+                    <Icon className="size-8 text-brand-strong" strokeWidth={1.75} />
+                    {PRODUCT_CATEGORY_LABELS[category]}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </Section>
+
+        <Section title="Productos destacados" moreHref="/catalogo" moreLabel="Ver todos">
+          {/* Cached query; Suspense keeps the rest of the page in the static shell. */}
+          <Suspense fallback={<ProductGridSkeleton count={4} />}>
+            <FeaturedProducts />
+          </Suspense>
+        </Section>
+      </div>
+    </>
   );
 }
 
-const Catalog = async ({ searchParams }: { searchParams: Promise<SearchParams> }) => {
-  const filters = parseFilters(await searchParams);
-  const { products, totalCount, pageCount } = await getCatalogPage(filters);
-
-  return (
-    <div className="grid gap-6">
-      <form action="/" className="flex max-w-md gap-2" role="search">
-        <Input name="q" defaultValue={filters.query} placeholder="Buscar productos…" maxLength={MAX_QUERY_LENGTH} />
-        {filters.category && <input type="hidden" name="category" value={filters.category} />}
-        <Button type="submit" variant="outline" size="icon" aria-label="Buscar">
-          <Search />
-        </Button>
-      </form>
-
-      <nav className="flex flex-wrap gap-2" aria-label="Categorías">
-        <CategoryChip href={buildCatalogHref({ ...filters, category: null, page: 1 })} isActive={!filters.category}>
-          Todo
-        </CategoryChip>
-        {PRODUCT_CATEGORIES.map((category) => (
-          <CategoryChip
-            key={category}
-            href={buildCatalogHref({ ...filters, category, page: 1 })}
-            isActive={filters.category === category}
-          >
-            {PRODUCT_CATEGORY_LABELS[category]}
-          </CategoryChip>
-        ))}
-      </nav>
-
-      {products.length === 0 ? (
-        <p className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
-          No encontramos productos con esos filtros.
-        </p>
-      ) : (
-        <>
-          <p className="text-sm text-muted-foreground">{totalCount} productos</p>
-          <ProductGrid products={products} />
-        </>
-      )}
-
-      {pageCount > 1 && (
-        <nav className="flex items-center justify-center gap-3" aria-label="Paginación">
-          {filters.page > 1 && (
-            <Link href={buildCatalogHref({ ...filters, page: filters.page - 1 })} className={buttonVariants({ variant: "outline" })}>
-              Anterior
-            </Link>
-          )}
-          <span className="text-sm text-muted-foreground">
-            Página {filters.page} de {pageCount}
-          </span>
-          {filters.page < pageCount && (
-            <Link href={buildCatalogHref({ ...filters, page: filters.page + 1 })} className={buttonVariants({ variant: "outline" })}>
-              Siguiente
-            </Link>
-          )}
-        </nav>
-      )}
+const Hero = () => (
+  <section className="relative overflow-hidden rounded-b-[2.5rem] bg-navy text-white">
+    {/* Decorative light sweeps in the brand blues. */}
+    <div aria-hidden className="pointer-events-none absolute inset-0">
+      <div className="absolute -top-40 -right-20 size-[36rem] rounded-full bg-brand-strong/35 blur-3xl" />
+      <div className="absolute -bottom-48 left-1/3 size-[28rem] rounded-full bg-brand/20 blur-3xl" />
     </div>
+
+    <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 md:grid-cols-[1.2fr_1fr] md:py-20">
+      <div className="grid justify-items-start gap-6">
+        <span className="flex items-center gap-2 rounded-full border border-brand/40 bg-white/5 px-4 py-1.5 text-sm">
+          <Zap className="size-4 fill-brand text-brand" />
+          Accesorios para tu celular
+        </span>
+        <h1 className="text-4xl leading-[1.05] font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+          Todo para tu celular.
+          <span className="block bg-linear-to-r from-brand to-brand-strong bg-clip-text text-transparent">
+            En un solo lugar.
+          </span>
+        </h1>
+        <p className="text-lg text-white/80">Fundas, cargadores, cables y más, con la mejor calidad.</p>
+        <div className="flex flex-wrap items-center gap-6">
+          <Link
+            href="/catalogo"
+            className={cn(buttonVariants({ size: "lg" }), "h-12 rounded-full px-7 text-base font-bold shadow-lg shadow-brand/30")}
+          >
+            Explorar catálogo
+            <ArrowRight />
+          </Link>
+          <span className="flex items-center gap-2 text-sm text-white/85">
+            <ShieldCheck className="size-6 text-brand" />
+            Compra segura
+          </span>
+        </div>
+      </div>
+
+      <div aria-hidden className="relative mx-auto hidden aspect-square w-full max-w-sm md:block">
+        <div className="absolute inset-0 rounded-full border-2 border-brand/40 shadow-[0_0_80px_-10px] shadow-brand/60" />
+        <div className="absolute inset-8 rounded-full border border-brand-strong/40" />
+        <Image src="/images/logo-mark.png" alt="" fill sizes="384px" priority className="rounded-full p-14" />
+      </div>
+    </div>
+  </section>
+);
+
+const Section = ({
+  title,
+  moreHref,
+  moreLabel,
+  children,
+}: {
+  title: string;
+  moreHref: string;
+  moreLabel: string;
+  children: ReactNode;
+}) => (
+  <section className="grid gap-5">
+    <div className="flex items-center justify-between gap-4">
+      <h2 className="flex items-center gap-3 text-xl font-extrabold tracking-tight text-navy sm:text-2xl">
+        <span aria-hidden className="h-7 w-1 rounded-full bg-brand" />
+        {title}
+      </h2>
+      <Link href={moreHref} className="flex shrink-0 items-center gap-1 text-sm font-semibold text-brand-strong hover:underline">
+        {moreLabel}
+        <ArrowRight className="size-4" />
+      </Link>
+    </div>
+    {children}
+  </section>
+);
+
+const FeaturedProducts = async () => {
+  const products = await getFeaturedProducts(FEATURED_PRODUCTS_LIMIT);
+
+  return products.length === 0 ? (
+    <p className="rounded-2xl border border-dashed p-12 text-center text-muted-foreground">
+      Pronto publicaremos nuestros productos.
+    </p>
+  ) : (
+    <ProductGrid products={products} />
   );
 };
-
-const CategoryChip = ({ href, isActive, children }: { href: string; isActive: boolean; children: string }) => (
-  <Link
-    href={href}
-    aria-current={isActive ? "page" : undefined}
-    className={cn(
-      buttonVariants({ variant: isActive ? "default" : "outline", size: "sm" }),
-      "rounded-full",
-    )}
-  >
-    {children}
-  </Link>
-);

@@ -32,10 +32,6 @@ export interface CatalogPage {
   pageCount: number;
 }
 
-export interface ProductDetail extends Product {
-  store: PublicStore | null;
-}
-
 export const getCatalogPage = async ({ query, category, page }: CatalogFilters): Promise<CatalogPage> => {
   "use cache";
   cacheTag(PRODUCTS_CACHE_TAG);
@@ -76,9 +72,10 @@ export const getPublicStore = async (merchantId: string): Promise<PublicStore | 
   return data;
 };
 
-export const getActiveProduct = async (productId: string): Promise<ProductDetail | null> => {
+// Single-seller store: the detail page does not show the merchant, so no store lookup.
+export const getActiveProduct = async (productId: string): Promise<Product | null> => {
   "use cache";
-  cacheTag(PRODUCTS_CACHE_TAG, STORES_CACHE_TAG);
+  cacheTag(PRODUCTS_CACHE_TAG);
   cacheLife("minutes");
 
   const { data: product } = await createSupabasePublicClient()
@@ -88,8 +85,7 @@ export const getActiveProduct = async (productId: string): Promise<ProductDetail
     .eq("is_active", true)
     .maybeSingle();
 
-  if (!product) return null;
-  return { ...product, store: await getPublicStore(product.user_id) };
+  return product;
 };
 
 export const getStoreProducts = async (merchantId: string): Promise<CatalogProduct[]> => {
@@ -107,6 +103,27 @@ export const getStoreProducts = async (merchantId: string): Promise<CatalogProdu
 
   if (error) {
     console.error("getStoreProducts failed", error.code, error.message);
+    return [];
+  }
+  return data;
+};
+
+// Home page "Productos destacados": newest in-stock products first.
+export const getFeaturedProducts = async (limit: number): Promise<CatalogProduct[]> => {
+  "use cache";
+  cacheTag(PRODUCTS_CACHE_TAG);
+  cacheLife("minutes");
+
+  const { data, error } = await createSupabasePublicClient()
+    .from("products")
+    .select(CATALOG_COLUMNS)
+    .eq("is_active", true)
+    .gt("stock", 0)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("getFeaturedProducts failed", error.code, error.message);
     return [];
   }
   return data;
