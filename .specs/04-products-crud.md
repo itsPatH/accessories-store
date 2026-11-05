@@ -10,7 +10,7 @@ Status: **Draft for review** · Related: [01-architecture](./01-architecture.md)
 | --- | --- | --- |
 | `/` | Server Component | Landing (05-branding §3): hero, category tiles linking to `/catalogo?category=`, "Productos destacados" (8 newest active in-stock products). |
 | `/catalogo` | Server Component | Full catalog: search box, category chips, paginated grid. Query params: `?q=&category=&page=` |
-| `/products/[id]` | Server Component | Gallery, title, price, stock status ("Out of stock" when `stock = 0`), description, merchant `store_name` linking to the store. 404 if not found or inactive. |
+| `/products/[id]` | Server Component | Gallery carousel (prev/next arrows, swipe, arrow keys, thumbnails; `components/storefront/product-gallery.tsx`), title, price, stock status ("Out of stock" when `stock = 0`), description, WhatsApp order button (hidden until configured; no self-link fallback). No merchant link: single-seller store. 404 if not found or inactive. |
 | `/stores/[merchantId]` | Server Component | Merchant `store_name`, avatar, their active products. 404 if not a merchant. |
 
 Pagination: 24 per page, ordered by `created_at desc`, using `.range(from, to)`. Search uses `title ilike %q%` (trigram index). `q` is trimmed and capped at 100 chars; `category` must be a valid enum value or is ignored.

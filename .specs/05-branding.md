@@ -7,7 +7,7 @@ Status: **Draft for review** · Related: [01-architecture](./01-architecture.md)
 | Item | Value |
 | --- | --- |
 | Store name | Guaro Cell |
-| Tagline | Celulares, accesorios, tecnología y más. |
+| Tagline | Accesorios para tu celular, tecnología y más. |
 | Location | Barquisimeto · Lara |
 | Currency | USD, `en-US` format (`$8.99`), 2 decimals (`lib/format.ts`) |
 | Font | Plus Jakarta Sans (`next/font/google`, free) |
@@ -44,8 +44,15 @@ Accessibility: white on `#00B4FF` is below WCAG AA (≈2.4:1), so solid surfaces
 - **Header** (navy, sticky): logo, nav `Inicio` · `Catálogo` · `Contacto` (scrolls to the footer), search icon → `/catalogo`. A dashboard icon appears only for signed-in users; there is **no public sign-in link** (single-seller store, 03-auth-flow §3.5).
 - **Home `/`**: hero (headline, CTA "Explorar catálogo", "Compra segura"), category tiles, "Productos destacados".
 - **Product card**: image, category chip, title, price, order button.
-- **Footer** (`#contacto`): logo + tagline, location, social icons (when configured), "Envíos a todo el país", "Compra segura", "Atención personalizada", copyright.
+- **Product detail**: photo carousel (arrows, swipe, keyboard, thumbnails), no merchant link, WhatsApp button only (no "Ver producto" self-link).
+- **Footer** (`#contacto`): logo + tagline, location, social icons (when configured), "Delivery", "Compra segura", "Atención personalizada", copyright.
 
 ## 5. Ordering (v1)
 
 There is no cart. The order button opens WhatsApp with a prefilled message (product title, price, link). Until `whatsappNumber` is set it reads "Ver producto" and links to the detail page. The mockup's cart icon, "Agregar al carrito" and favorites (heart) are out of scope until a cart/orders spec exists.
+
+## 6. Mobile QA
+
+`tests/e2e/mobile.spec.ts` (Playwright, `pnpm test:e2e`) runs on two phone profiles (Galaxy S9+ 320 px, iPhone 14 390 px) using the system Microsoft Edge, so no browser download is needed. It checks: no horizontal scroll on home, catalog, product and login; mobile nav and active state; no public sign-in links; Contacto scrolls to the footer; category tiles filter the catalog; search empty state; two-column product grid; product detail without store link or self-link; gallery arrows, wrap-around, thumbnails and swipe; 404 for unknown products.
+
+Tests read live catalog data: checks that need products, or a product with 2+ photos, are skipped when that data does not exist. `E2E_BASE_URL` points them at another server (e.g. `next start`).
