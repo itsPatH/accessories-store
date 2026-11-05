@@ -7,7 +7,7 @@ import { InstagramIcon, TikTokIcon, WhatsAppIcon } from "@/components/brand/soci
 import { getWhatsAppUrl, SITE_CONFIG } from "@/lib/site-config";
 
 const FEATURES: { icon: LucideIcon; label: string }[] = [
-  { icon: Truck, label: "Envíos a todo el país" },
+  { icon: Truck, label: "Delivery" },
   { icon: ShieldCheck, label: "Compra segura" },
   { icon: Headset, label: "Atención personalizada" },
 ];

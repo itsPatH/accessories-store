@@ -12,7 +12,7 @@ interface SiteConfig {
 
 export const SITE_CONFIG: SiteConfig = {
   name: "Guaro Cell",
-  tagline: "Celulares, accesorios, tecnología y más.",
+  tagline: "Accesorios para tu celular, tecnología y más.",
   location: "Barquisimeto · Lara",
   whatsappNumber: null,
   instagramUrl: null,
